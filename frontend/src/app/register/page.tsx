@@ -2,16 +2,15 @@
 
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import AppButton from "./components/AppButton";
-import FaceBox from "./components/FaceBox";
-import { useRouter } from "next/navigation";
+import TextField from "@mui/material/TextField";
+import AppButton from "../components/AppButton";
+import FaceBox from "../components/FaceBox";
 
-export default function Home() {
-  const router = useRouter();
+export default function RegisterPage() {
   return (
     <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center" }}>
       <Typography variant="h4" component="h1" sx={{ textAlign: "center", pt: 4, mb: 4 }}>
-        Welcome to FaceLogin
+        Register to FaceLogin
       </Typography>
 
       <Box sx={{ mb: 4 }}>
@@ -23,14 +22,13 @@ export default function Home() {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: 2,
+          gap: 3,
         }}
       >
-        <AppButton>Login with Face</AppButton>
-        <Typography variant="body1">
-          New to FaceLogin? Register here
-        </Typography>
-        <AppButton onClick={() => router.push("/register")}>Register</AppButton>
+        <TextField label="Name" variant="outlined" sx={{ width: 320 }} />
+        <TextField label="Email" variant="outlined" type="email" sx={{ width: 320 }} />
+        <TextField label="Phone Number" variant="outlined" type="tel" sx={{ width: 320 }} />
+        <AppButton sx={{ mt: 1 }}>Register Face</AppButton>
       </Box>
     </Box>
   );
