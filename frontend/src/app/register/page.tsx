@@ -7,7 +7,7 @@ import TextField from "@mui/material/TextField";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import AppButton from "../components/AppButton";
-import FaceBox from "../components/FaceBox";
+import RegisterFaceBox from "../components/RegisterFaceBox";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -56,7 +56,7 @@ export default function RegisterPage() {
       </Typography>
 
       <Box sx={{ mb: 4 }}>
-        <FaceBox
+        <RegisterFaceBox
           onCapture={(embedding) => setFaceEmbedding(embedding)}
           captured={faceEmbedding !== null}
         />

@@ -5,7 +5,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
 import AppButton from "./components/AppButton";
-import FaceBox from "./components/FaceBox";
+import LoginFaceBox from "./components/LoginFaceBox";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
@@ -19,10 +19,7 @@ export default function Home() {
       </Typography>
 
       <Box sx={{ mb: 4 }}>
-        <FaceBox
-          onCapture={() => {}}
-          captured={false}
-          loginMode
+        <LoginFaceBox
           onLoginSuccess={(name) => router.push(`/welcome?name=${encodeURIComponent(name)}`)}
           onLoginError={(msg) => setError(msg)}
         />
