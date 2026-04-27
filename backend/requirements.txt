@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+deepface
+sqlalchemy
+psycopg2-binary
+python-multipart
+pillow
+numpy
+tf-keras
