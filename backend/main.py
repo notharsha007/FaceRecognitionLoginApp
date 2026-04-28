@@ -76,9 +76,9 @@ def capture_face(req: CaptureRequest):
 
         result = DeepFace.represent(
             img_path=image_np,
-            model_name="Facenet",
-            enforce_detection=False,
-            detector_backend="opencv",
+            model_name="ArcFace",
+            enforce_detection=True,
+            detector_backend="retinaface",
         )
         embedding = result[0]["embedding"]
         return {"embedding": embedding}
@@ -98,9 +98,9 @@ def login(req: CaptureRequest, db: Session = Depends(get_db)):
 
         result = DeepFace.represent(
             img_path=image_np,
-            model_name="Facenet",
-            enforce_detection=False,
-            detector_backend="opencv",
+            model_name="ArcFace",
+            enforce_detection=True,
+            detector_backend="retinaface",
         )
         login_embedding = np.array(result[0]["embedding"])
     except Exception as e:
@@ -123,10 +123,16 @@ def login(req: CaptureRequest, db: Session = Depends(get_db)):
             best_similarity = similarity
             best_user = user
 
-    THRESHOLD = 0.77
+    THRESHOLD = 0.68
 
     if best_similarity >= THRESHOLD and best_user is not None:
-        return {"name": best_user.name, "similarity": best_similarity}
+        return {
+            "name": best_user.name,
+            "email": best_user.email,
+            "phone": best_user.phone,
+            "created_at": best_user.created_at.isoformat() if best_user.created_at else None,
+            "similarity": best_similarity,
+        }
     else:
         raise HTTPException(status_code=401, detail="Face not recognized. Please try again or register.")
 

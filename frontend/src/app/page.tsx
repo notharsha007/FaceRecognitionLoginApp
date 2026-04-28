@@ -5,7 +5,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
 import AppButton from "./components/AppButton";
-import LoginFaceBox from "./components/LoginFaceBox";
+import LoginFaceBox, { LoginUser } from "./components/LoginFaceBox";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
@@ -20,7 +20,15 @@ export default function Home() {
 
       <Box sx={{ mb: 4 }}>
         <LoginFaceBox
-          onLoginSuccess={(name) => router.push(`/welcome?name=${encodeURIComponent(name)}`)}
+          onLoginSuccess={(user: LoginUser) => {
+            const params = new URLSearchParams({
+              name: user.name,
+              email: user.email,
+              phone: user.phone,
+              ...(user.created_at ? { created_at: user.created_at } : {}),
+            });
+            router.push(`/welcome?${params.toString()}`);
+          }}
           onLoginError={(msg) => setError(msg)}
         />
       </Box>

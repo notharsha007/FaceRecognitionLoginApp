@@ -6,8 +6,15 @@ import CircularProgress from "@mui/material/CircularProgress";
 import AppButton from "./AppButton";
 import { useFaceDetection } from "../hooks/useFaceDetection";
 
+export interface LoginUser {
+  name: string;
+  email: string;
+  phone: string;
+  created_at: string | null;
+}
+
 interface Props {
-  onLoginSuccess: (name: string) => void;
+  onLoginSuccess: (user: LoginUser) => void;
   onLoginError: (message: string) => void;
 }
 
@@ -37,7 +44,7 @@ export default function LoginFaceBox({ onLoginSuccess, onLoginError }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail ?? "Face not recognized.");
 
-      onLoginSuccess(data.name);
+      onLoginSuccess({ name: data.name, email: data.email, phone: data.phone, created_at: data.created_at });
     } catch (e: unknown) {
       const msg =
         e instanceof Error && e.name === "AbortError"
