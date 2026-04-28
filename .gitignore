@@ -19,3 +19,4 @@ frontend/src/app/test/
 # Claude Code
 .claude/
 CLAUDE.md
+.mcp.json
