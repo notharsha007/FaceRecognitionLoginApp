@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -10,12 +11,18 @@ export default function WelcomePage() {
   const params = useSearchParams();
   const router = useRouter();
   const name = params.get("name") ?? "User";
+
+  useEffect(() => {
+    fetch("http://localhost:8000/api/verify", { credentials: "include" })
+      .then((res) => { if (!res.ok) router.replace("/"); })
+      .catch(() => router.replace("/"));
+  }, [router]);
   const email = params.get("email");
   const phone = params.get("phone");
   const createdAt = params.get("created_at");
 
   const memberSince = createdAt
-    ? new Date(createdAt).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })
+    ? new Date(createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
     : null;
 
   return (
@@ -58,7 +65,10 @@ export default function WelcomePage() {
         {memberSince && <Detail label="Member since" value={memberSince} />}
       </Box>
 
-      <AppButton onClick={() => router.push("/")}>Logout</AppButton>
+      <AppButton onClick={() => {
+        fetch("http://localhost:8000/api/logout", { method: "POST", credentials: "include" })
+          .finally(() => router.push("/"));
+      }}>Logout</AppButton>
     </Box>
   );
 }

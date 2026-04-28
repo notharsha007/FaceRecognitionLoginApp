@@ -1,16 +1,30 @@
 import base64
 import io
 import json
+import os
+from datetime import datetime, timedelta, timezone
 
 import numpy as np
 from deepface import DeepFace
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from jose import jwt, JWTError
 from PIL import Image
 from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from sqlalchemy.sql import func
+
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-in-production")
+ALGORITHM = "HS256"
+TOKEN_EXPIRE_HOURS = 8
+
+
+def create_token(data: dict) -> str:
+    payload = data.copy()
+    payload["exp"] = datetime.now(timezone.utc) + timedelta(hours=TOKEN_EXPIRE_HOURS)
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 DATABASE_URL = "postgresql://postgres:postgres123@localhost:5432/faceauth"
 
@@ -39,6 +53,7 @@ app.add_middleware(
     allow_origins=["http://localhost:3000"],
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
 
 
@@ -126,13 +141,21 @@ def login(req: CaptureRequest, db: Session = Depends(get_db)):
     THRESHOLD = 0.68
 
     if best_similarity >= THRESHOLD and best_user is not None:
-        return {
+        token = create_token({"sub": str(best_user.id), "email": best_user.email})
+        response = JSONResponse({
             "name": best_user.name,
             "email": best_user.email,
             "phone": best_user.phone,
             "created_at": best_user.created_at.isoformat() if best_user.created_at else None,
-            "similarity": best_similarity,
-        }
+        })
+        response.set_cookie(
+            key="auth_token",
+            value=token,
+            httponly=True,
+            samesite="lax",
+            max_age=TOKEN_EXPIRE_HOURS * 3600,
+        )
+        return response
     else:
         raise HTTPException(status_code=401, detail="Face not recognized. Please try again or register.")
 
@@ -153,3 +176,22 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
     return {"message": "Registered successfully", "user_id": user.id}
+
+
+@app.get("/api/verify")
+def verify(request: Request):
+    token = request.cookies.get("auth_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated.")
+    try:
+        jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired token.")
+    return {"ok": True}
+
+
+@app.post("/api/logout")
+def logout():
+    response = JSONResponse({"message": "Logged out."})
+    response.delete_cookie(key="auth_token", samesite="lax")
+    return response

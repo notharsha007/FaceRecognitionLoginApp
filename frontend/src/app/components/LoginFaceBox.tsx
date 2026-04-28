@@ -38,6 +38,7 @@ export default function LoginFaceBox({ onLoginSuccess, onLoginError }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: base64 }),
         signal: controller.signal,
+        credentials: "include",
       });
       clearTimeout(timeout);
 

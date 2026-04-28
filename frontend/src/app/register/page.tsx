@@ -9,10 +9,24 @@ import CircularProgress from "@mui/material/CircularProgress";
 import AppButton from "../components/AppButton";
 import RegisterFaceBox from "../components/RegisterFaceBox";
 
+type FieldErrors = { name?: string; email?: string; phone?: string };
+
+function validate(name: string, email: string, phone: string): FieldErrors {
+  const errors: FieldErrors = {};
+  if (!name.trim()) errors.name = "Name is required.";
+  else if (name.trim().length < 2) errors.name = "Name must be at least 2 characters.";
+  if (!email.trim()) errors.email = "Email is required.";
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = "Enter a valid email address.";
+  if (!phone.trim()) errors.phone = "Phone number is required.";
+  else if (!/^\+?[0-9\s\-()]{7,15}$/.test(phone)) errors.phone = "Enter a valid phone number.";
+  return errors;
+}
+
 export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [faceEmbedding, setFaceEmbedding] = useState<number[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,6 +34,12 @@ export default function RegisterPage() {
 
   async function handleRegister() {
     if (!faceEmbedding) return;
+    const errors = validate(name, email, phone);
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+    setFieldErrors({});
     setLoading(true);
     setError(null);
 
@@ -68,7 +88,9 @@ export default function RegisterPage() {
           variant="outlined"
           sx={{ width: 320 }}
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => { setName(e.target.value); setFieldErrors((prev) => ({ ...prev, name: undefined })); }}
+          error={!!fieldErrors.name}
+          helperText={fieldErrors.name}
         />
         <TextField
           label="Email"
@@ -76,7 +98,9 @@ export default function RegisterPage() {
           type="email"
           sx={{ width: 320 }}
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => { setEmail(e.target.value); setFieldErrors((prev) => ({ ...prev, email: undefined })); }}
+          error={!!fieldErrors.email}
+          helperText={fieldErrors.email}
         />
         <TextField
           label="Phone Number"
@@ -84,7 +108,9 @@ export default function RegisterPage() {
           type="tel"
           sx={{ width: 320 }}
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(e) => { setPhone(e.target.value); setFieldErrors((prev) => ({ ...prev, phone: undefined })); }}
+          error={!!fieldErrors.phone}
+          helperText={fieldErrors.phone}
         />
 
         {error && <Alert severity="error" sx={{ width: 320 }}>{error}</Alert>}
