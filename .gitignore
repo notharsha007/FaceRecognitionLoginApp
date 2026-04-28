@@ -9,6 +9,9 @@ frontend/.next/
 frontend/node_modules/
 frontend/.env*
 
+# Test pages
+frontend/src/app/test/
+
 # General
 .DS_Store
 *.log

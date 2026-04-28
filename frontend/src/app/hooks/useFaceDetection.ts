@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
+import { drawFaceBox } from "../utils/drawFaceBox";
 
 export type FaceDetectionState = "idle" | "loading" | "scanning" | "processing" | "error";
 
@@ -70,41 +71,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
 
         if (detection) {
           setFaceDetected(true);
-
-          const scaleX = displayW / (video.videoWidth || displayW);
-          const scaleY = displayH / (video.videoHeight || displayH);
-          const { x, y, width, height } = detection.box;
-          const bx = x * scaleX;
-          const by = y * scaleY;
-          const bw = width * scaleX;
-          const bh = height * scaleY;
-
-          // Bounding box
-          ctx.strokeStyle = "#22c55e";
-          ctx.lineWidth = 3;
-          ctx.strokeRect(bx, by, bw, bh);
-
-          // Corner accents
-          const cs = 16;
-          ctx.strokeStyle = "#4ade80";
-          ctx.lineWidth = 4;
-          ctx.beginPath(); ctx.moveTo(bx, by + cs); ctx.lineTo(bx, by); ctx.lineTo(bx + cs, by); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(bx + bw - cs, by); ctx.lineTo(bx + bw, by); ctx.lineTo(bx + bw, by + cs); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(bx, by + bh - cs); ctx.lineTo(bx, by + bh); ctx.lineTo(bx + cs, by + bh); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(bx + bw - cs, by + bh); ctx.lineTo(bx + bw, by + bh); ctx.lineTo(bx + bw, by + bh - cs); ctx.stroke();
-
-          // "Face Detected" badge
-          const label = "Face Detected";
-          ctx.font = "bold 13px sans-serif";
-          const textW = ctx.measureText(label).width;
-          const badgeX = bx;
-          const badgeY = by > 28 ? by - 28 : by + bh + 6;
-          ctx.fillStyle = "#22c55e";
-          ctx.beginPath();
-          ctx.roundRect(badgeX, badgeY, textW + 16, 22, 6);
-          ctx.fill();
-          ctx.fillStyle = "#fff";
-          ctx.fillText(label, badgeX + 8, badgeY + 15);
+          drawFaceBox(ctx, detection, displayW, displayH, video.videoWidth || displayW, video.videoHeight || displayH);
         } else {
           setFaceDetected(false);
         }
