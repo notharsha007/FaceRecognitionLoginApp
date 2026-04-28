@@ -6,10 +6,12 @@ import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
 import AppButton from "./components/AppButton";
 import LoginFaceBox, { LoginUser } from "./components/LoginFaceBox";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function Home() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const justRegistered = searchParams.get("registered") === "true";
   const [error, setError] = useState<string | null>(null);
 
   return (
@@ -17,6 +19,12 @@ export default function Home() {
       <Typography variant="h4" component="h1" sx={{ textAlign: "center", pt: 4, mb: 4 }}>
         Welcome to FaceLogin
       </Typography>
+
+      {justRegistered && (
+        <Alert severity="success" sx={{ width: 320, mb: 2 }}>
+          You have registered successfully. Please log in.
+        </Alert>
+      )}
 
       <Box sx={{ mb: 4 }}>
         <LoginFaceBox

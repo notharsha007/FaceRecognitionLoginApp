@@ -7,13 +7,16 @@ import CircularProgress from "@mui/material/CircularProgress";
 import AppButton from "./AppButton";
 import { useFaceDetection } from "../hooks/useFaceDetection";
 
+const TOTAL_CAPTURES = 3;
+
 interface Props {
-  onCapture: (embedding: number[]) => void;
+  onCapture: (embeddings: number[][]) => void;
   captured: boolean;
 }
 
 export default function RegisterFaceBox({ onCapture, captured }: Props) {
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [capturedImages, setCapturedImages] = useState<string[]>([]);
+  const [embeddings, setEmbeddings] = useState<number[][]>([]);
 
   const {
     state, faceDetected, errorMsg,
@@ -21,11 +24,14 @@ export default function RegisterFaceBox({ onCapture, captured }: Props) {
     startWebcam, captureFrame, setState, setErrorMsg, handleRetry,
   } = useFaceDetection();
 
+  const captureCount = embeddings.length;
+  const allCaptured = captureCount >= TOTAL_CAPTURES;
+  const displayState = allCaptured ? "captured" : state;
+
   async function handleCapture() {
     setState("processing");
     const base64 = captureFrame();
     if (!base64) return;
-    setCapturedImage(base64);
 
     try {
       const controller = new AbortController();
@@ -41,8 +47,17 @@ export default function RegisterFaceBox({ onCapture, captured }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail ?? "Failed to process face.");
 
-      setState("captured" as never);
-      onCapture(data.embedding);
+      const newEmbeddings = [...embeddings, data.embedding];
+      const newImages = [...capturedImages, base64];
+      setEmbeddings(newEmbeddings);
+      setCapturedImages(newImages);
+
+      if (newEmbeddings.length >= TOTAL_CAPTURES) {
+        setState("captured" as never);
+        onCapture(newEmbeddings);
+      } else {
+        handleRetry();
+      }
     } catch (e: unknown) {
       const msg =
         e instanceof Error && e.name === "AbortError"
@@ -54,11 +69,8 @@ export default function RegisterFaceBox({ onCapture, captured }: Props) {
   }
 
   function onRetry() {
-    setCapturedImage(null);
     handleRetry();
   }
-
-  const displayState = captured ? "captured" : state;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
@@ -87,7 +99,6 @@ export default function RegisterFaceBox({ onCapture, captured }: Props) {
       >
         {displayState === "idle" && (
           <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5, px: 2 }}>
-            <Typography sx={{ fontSize: 64, lineHeight: 1 }}>🫥</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center" }}>
               Face preview will appear here
             </Typography>
@@ -104,7 +115,6 @@ export default function RegisterFaceBox({ onCapture, captured }: Props) {
           </Box>
         )}
 
-        {/* Always in DOM so videoRef is available during loading state */}
         <video
           ref={videoRef}
           style={{
@@ -128,7 +138,7 @@ export default function RegisterFaceBox({ onCapture, captured }: Props) {
             color: "#fff", fontSize: 12, fontWeight: 600, letterSpacing: 0.5,
             whiteSpace: "nowrap", transition: "background-color 0.3s",
           }}>
-            {faceDetected ? "Face Detected — Ready to Capture" : "Scanning for face..."}
+            {faceDetected ? `Face Detected — Ready to Capture` : "Scanning for face..."}
           </Box>
         )}
 
@@ -139,15 +149,14 @@ export default function RegisterFaceBox({ onCapture, captured }: Props) {
           </Box>
         )}
 
-        {displayState === "captured" && capturedImage && (
+        {displayState === "captured" && capturedImages.length > 0 && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={capturedImage} alt="Captured face"
+          <img src={capturedImages[capturedImages.length - 1]} alt="Captured face"
             style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         )}
 
         {displayState === "error" && (
           <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, px: 2 }}>
-            <Typography sx={{ fontSize: 48, lineHeight: 1 }}>❌</Typography>
             <Typography variant="body2" color="error" sx={{ textAlign: "center" }}>{errorMsg}</Typography>
           </Box>
         )}
@@ -155,15 +164,32 @@ export default function RegisterFaceBox({ onCapture, captured }: Props) {
 
       <canvas ref={captureCanvasRef} style={{ display: "none" }} />
 
+      {!allCaptured && captureCount > 0 && (
+        <Box sx={{ display: "flex", gap: 1 }}>
+          {Array.from({ length: TOTAL_CAPTURES }).map((_, i) => (
+            <Box key={i} sx={{
+              width: 10, height: 10, borderRadius: "50%",
+              bgcolor: i < captureCount ? "success.main" : "divider",
+              transition: "background-color 0.2s",
+            }} />
+          ))}
+        </Box>
+      )}
+
       {displayState === "scanning" && (
-        <AppButton onClick={handleCapture} disabled={!faceDetected}>
-          {faceDetected ? "Capture Face" : "Waiting for face..."}
-        </AppButton>
+        <>
+          <Typography variant="caption" color="text.secondary">
+            Capture {captureCount + 1} of {TOTAL_CAPTURES} — vary your angle slightly
+          </Typography>
+          <AppButton onClick={handleCapture} disabled={!faceDetected}>
+            {faceDetected ? `Capture ${captureCount + 1} of ${TOTAL_CAPTURES}` : "Waiting for face..."}
+          </AppButton>
+        </>
       )}
       {displayState === "error" && <AppButton onClick={onRetry}>Try Again</AppButton>}
       {displayState === "captured" && (
         <Typography variant="caption" color="success.main" sx={{ fontWeight: 600 }}>
-          ✓ Face scanned successfully
+          ✓ All {TOTAL_CAPTURES} face scans captured
         </Typography>
       )}
     </Box>

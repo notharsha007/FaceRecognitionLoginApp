@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import AppButton from "../components/AppButton";
+import BackButton from "../components/BackButton";
 import RegisterFaceBox from "../components/RegisterFaceBox";
 
 type FieldErrors = { name?: string; email?: string; phone?: string };
@@ -23,17 +25,17 @@ function validate(name: string, email: string, phone: string): FieldErrors {
 }
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [faceEmbedding, setFaceEmbedding] = useState<number[] | null>(null);
+  const [faceEmbeddings, setFaceEmbeddings] = useState<number[][] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   async function handleRegister() {
-    if (!faceEmbedding) return;
+    if (!faceEmbeddings) return;
     const errors = validate(name, email, phone);
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -47,11 +49,11 @@ export default function RegisterPage() {
       const res = await fetch("http://localhost:8000/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, phone, face_embedding: faceEmbedding }),
+        body: JSON.stringify({ name, email, phone, face_embeddings: faceEmbeddings }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail ?? "Registration failed.");
-      setSuccess(true);
+      router.push("/?registered=true");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Registration failed.");
     } finally {
@@ -59,26 +61,17 @@ export default function RegisterPage() {
     }
   }
 
-  if (success) {
-    return (
-      <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2 }}>
-        <Typography sx={{ fontSize: 72 }}>🎉</Typography>
-        <Typography variant="h5">Registered successfully!</Typography>
-        <Typography variant="body2" color="text.secondary">You can now log in with your face.</Typography>
-      </Box>
-    );
-  }
-
   return (
-    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center" }}>
+    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
+      <BackButton />
       <Typography variant="h4" component="h1" sx={{ textAlign: "center", pt: 4, mb: 4 }}>
         Register to FaceLogin
       </Typography>
 
       <Box sx={{ mb: 4 }}>
         <RegisterFaceBox
-          onCapture={(embedding) => setFaceEmbedding(embedding)}
-          captured={faceEmbedding !== null}
+          onCapture={(embeddings) => setFaceEmbeddings(embeddings)}
+          captured={faceEmbeddings !== null}
         />
       </Box>
 
@@ -118,14 +111,14 @@ export default function RegisterPage() {
         <AppButton
           sx={{ mt: 1 }}
           onClick={handleRegister}
-          disabled={!faceEmbedding || loading}
+          disabled={!faceEmbeddings || loading}
         >
           {loading ? <CircularProgress size={22} color="inherit" /> : "Register Face"}
         </AppButton>
 
-        {!faceEmbedding && (
+        {!faceEmbeddings && (
           <Typography variant="caption" color="text.secondary">
-            Please scan your face before registering.
+            Please complete all 3 face scans before registering.
           </Typography>
         )}
       </Box>

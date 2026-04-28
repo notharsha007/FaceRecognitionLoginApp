@@ -6,6 +6,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
 import AppButton from "../components/AppButton";
+import BackButton from "../components/BackButton";
 
 export default function WelcomePage() {
   const params = useSearchParams();
@@ -34,8 +35,10 @@ export default function WelcomePage() {
         alignItems: "center",
         justifyContent: "center",
         gap: 3,
+        position: "relative",
       }}
     >
+      <BackButton />
       <Typography variant="h3" component="h1" sx={{ textAlign: "center" }}>
         Hello, {name}!
       </Typography>

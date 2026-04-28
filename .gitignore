@@ -15,3 +15,7 @@ frontend/src/app/test/
 # General
 .DS_Store
 *.log
+
+# Claude Code
+.claude/
+CLAUDE.md

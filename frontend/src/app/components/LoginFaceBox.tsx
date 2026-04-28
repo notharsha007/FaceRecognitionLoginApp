@@ -83,7 +83,6 @@ export default function LoginFaceBox({ onLoginSuccess, onLoginError }: Props) {
       >
         {state === "idle" && (
           <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5, px: 2 }}>
-            <Typography sx={{ fontSize: 64, lineHeight: 1 }}>🫥</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center" }}>
               Face preview will appear here
             </Typography>
@@ -137,7 +136,6 @@ export default function LoginFaceBox({ onLoginSuccess, onLoginError }: Props) {
 
         {state === "error" && (
           <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, px: 2 }}>
-            <Typography sx={{ fontSize: 48, lineHeight: 1 }}>❌</Typography>
             <Typography variant="body2" color="error" sx={{ textAlign: "center" }}>{errorMsg}</Typography>
           </Box>
         )}

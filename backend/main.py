@@ -73,7 +73,7 @@ class RegisterRequest(BaseModel):
     name: str
     email: str
     phone: str
-    face_embedding: list[float]
+    face_embeddings: list[list[float]]
 
 
 @app.get("/")
@@ -129,14 +129,16 @@ def login(req: CaptureRequest, db: Session = Depends(get_db)):
     best_user = None
 
     for user in users:
-        stored = np.array(json.loads(user.face_embedding))
-        similarity = float(
-            np.dot(login_embedding, stored) /
-            (np.linalg.norm(login_embedding) * np.linalg.norm(stored) + 1e-10)
-        )
-        if similarity > best_similarity:
-            best_similarity = similarity
-            best_user = user
+        stored_embeddings = json.loads(user.face_embedding)
+        for stored in stored_embeddings:
+            stored_vec = np.array(stored)
+            similarity = float(
+                np.dot(login_embedding, stored_vec) /
+                (np.linalg.norm(login_embedding) * np.linalg.norm(stored_vec) + 1e-10)
+            )
+            if similarity > best_similarity:
+                best_similarity = similarity
+                best_user = user
 
     THRESHOLD = 0.68
 
@@ -147,6 +149,7 @@ def login(req: CaptureRequest, db: Session = Depends(get_db)):
             "email": best_user.email,
             "phone": best_user.phone,
             "created_at": best_user.created_at.isoformat() if best_user.created_at else None,
+            "similarity": best_similarity,
         })
         response.set_cookie(
             key="auth_token",
@@ -170,7 +173,7 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
         name=req.name,
         email=req.email,
         phone=req.phone,
-        face_embedding=json.dumps(req.face_embedding),
+        face_embedding=json.dumps(req.face_embeddings),
     )
     db.add(user)
     db.commit()
